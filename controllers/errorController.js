@@ -2,15 +2,11 @@ const AppError = require("./../utils/appError");
 
 const handleCastErrorDB = (err) => {
   const message = `Invalid ${err.path}: ${err.value}.`;
-  console.log(message);
   return new AppError(message, 400);
 };
 
 const handleDuplicateFieldsDB = (err) => {
   // const value = err.errmsg.match(/(["'])(\\?.)*?\1/)[0];
-
-  console.log(err);
-
   const message = `Duplicate field value:. Please use another value!`;
   return new AppError(message, 400);
 };
@@ -35,8 +31,6 @@ const sendErrorProd = (err, res) => {
   if (err.isOperational) {
     res.status(err.statusCode).json({
       status: err.status,
-      error: err,
-
       message: err.message,
     });
 
@@ -59,20 +53,13 @@ module.exports = (err, req, res, next) => {
 
   err.statusCode = err.statusCode || 500;
   err.status = err.status || "error";
-
-  console.log(process.env.NODE_ENV);
-
   if (process.env.NODE_ENV === "development") {
-    console.log(err);
     sendErrorDev(err, res);
   } else if (process.env.NODE_ENV === "production") {
     let error = { ...err };
-
-    console.log("Eqwwre:::", error.errors);
     if (error.name === "CastError") error = handleCastErrorDB(error);
     if (error.code === 11000) error = handleDuplicateFieldsDB(error);
     if (error._message === "Validation failed") {
-      console.log("here its");
       error = handleValidationErrorDB(error);
     }
 
